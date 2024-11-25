@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=rbac
+    ports:
+      - '4000:5432'
+  test_db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - '4001:5432'
+  backend:
+    build: ./backend
+    ports:
+      - '4003:8000'
+    depends_on:
+      - db
+    command: sh -c "./wait-for-it.sh db:5432 --timeout=30 && ./db/init_db.sh && python3 main.py"
+  frontend:
+    build: ./frontend/rbac
+    environment:
+      - PORT=3000
+      - REACT_APP_BACKEND_BASE_URL=http://localhost:4003/api/v1
+    ports:
+      - '3000:3000'

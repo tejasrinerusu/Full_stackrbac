@@ -1,0 +1,43 @@
+name: Backend Unit Testing
+on: [pull_request, push]
+jobs:
+    backend-test:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: ./backend
+        services:
+            postgres:
+                image: postgres
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                    POSTGRES_DB: rbac
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                ports:
+                    - 5432:5432
+        steps:
+            - name: Check out repository code
+              uses: actions/checkout@v3
+            - name: Set up Python 3.10
+              uses: actions/setup-python@v4
+              with:
+                  python-version: "3.10"
+                  cache: "pip"
+            - name: Install dependencies
+              run: pip install -r requirements.txt
+            - name: Test with pytest
+              run: pytest
+              env:
+                  SECRET_KEY: ${{ secrets.SECRET_KEY }}
+                  POSTGRES_USER: postgres
+                  POSTGRES_PASSWORD: postgres
+                  POSTGRES_DB: rbac
+                  POSTGRES_TEST_DB: rbac
+                  POSTGRES_HOST: localhost
+                  POSTGRES_PORT: 5432
+                  POSTGRES_TEST_PORT: 5432
